@@ -20,9 +20,10 @@ import (
 func main() {
 	//  TODO: чтение из конфиг файла
 	severPort := "8080"
-	queueSize := 3
-	queues := []string{
-		"app_events",
+	queueSize := 100
+	queues := make([]string, 0, 100)
+	for i := 1; i <= 1000; i++ {
+		queues = append(queues, fmt.Sprintf("app_events_%v", i))
 	}
 
 	logFile, _ := os.Create(fmt.Sprintf("logs_%s.log", time.Now().Format("2006-01-02_15-04-05")))
