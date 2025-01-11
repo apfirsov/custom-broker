@@ -1,0 +1,48 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 10
+      arrivalRate: 10
+  ws:
+    # конфигурация для WebSocket
+    target: "ws://localhost:8080"
+    connections: 10
+    phases:
+      - duration: 10
+scenarios:
+  - name: "Producing messages"
+    flow:
+      - function: generateRandomParam
+      - post:
+          url: "/v1/queues/app_events_1/messages"
+          json:
+            id: "{{ $requestId }}"
+            data: "some data"
+  - name: "WebSocket Receive Messages"
+    engine: "ws"
+    flow:
+      - function: generateRandomParam
+      - ws:
+        - function: generateRandomParam
+        - action: "connect"
+          url: "/v1/queues/app_events_1/subscriptions"
+        - action: "listen"
+
+variables:
+  value: "1"
+  requestId: "{{ uuid() }}"
+
+processor:
+  generateRandomParam: |
+    function(userContext, events, done) {
+      const min = 1;
+      const max = 10;
+      const randomInt = Math.floor(Math.random() * (max - min + 1)) + min;
+      userContext.vars.value = `app_events_${randomInt}`;
+      done();
+    }
+  onMessage: |
+    function(message, userContext, events, done) {
+      console.log("Received message:", message);
+      done();
+    }
